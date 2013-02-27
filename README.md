@@ -4,6 +4,8 @@ real world with a couple of old-fashioned DC voltmeters.  If your downlink is sa
 
 I've found that 'ambient information' like this is really helpful. I quite like being able to glance over on my desk and see how busy my network is. You can argue that an X-Y graph would be better, and perhaps so, but something like this that just runs and quietly keeps you in the know suits how I work.
 
+![the results](http://www.phfactor.net/wp-pics/meters.jpg)
+
 ## Requirements
 * pfSense-based router. I use a [Netgate 2d13](http://store.netgate.com/Netgate-m1n1wall-2D3-2D13-Red-P218C83.aspx) which I can highly recommend.
 * An [Arduino](http://arduino.cc)
@@ -18,12 +20,15 @@ I've found that 'ambient information' like this is really helpful. I quite like 
 pfSense has a neat SVG-based graph on the home page showing usage:
 
 If you dig into the source code, you'll find repeated calls to
+
 	/ifstats.php?if=wan
 	
 which returns a single line like this:
+
 	1361229172.9342|-614262342|1278023881
 	
 A [bit of searching finds](http://forum.pfsense.org/index.php?PHPSESSID=thnntfcefe2shn093k996392u6&topic=15945.0) that its:
+
 	timestamp|down_bytes|up_bytes
 	
 So the algorithm is
@@ -35,6 +40,7 @@ So the algorithm is
 
 The meters are driven directly by the analog voltage pins of the Arduino. So, using RESTDuino, we simply have to
 scale the bytes/second into an integer between 0 and 255. (PWM output). And then call something like this:
+
 	http://arduino.phfactor.net/6/122
 	http://arduino.phfactor.net/9/21
 	
@@ -53,15 +59,18 @@ The code relies upon the Arduino being available at a fixed IP address or hostna
 either DHCP or a fixed IP address. I don't know if the RESTDuino stack supports a WiFi adapter or not, since the code just does HTTP it should work either way.
 
 Once RESTDuino is up and running, test it out by trying it manually. You can use a browser, curl, wget or similar. E.g.
+
 	http://arduino.phfactor.net/6/0
 	http://arduino.phfactor.net/6/255
 	
 The meters should move to position and hold there. Neat!
 ## Code setup / configuration
 I've put all of the configuration into 
+
 	config.ini
 	
 to make life simpler. Here's mine, elided a bit:
+
 	[arduino]
 	address=arduino.phfactor.net
 	pin_up=9
@@ -83,6 +92,12 @@ to make life simpler. Here's mine, elided a bit:
 	num_pts_average=15
 
 Hopefully those make sense. Experimenting a bit, but 10Hz updates with 15-point averages seems to work pretty well.
+
+## Run it
+	./pushpull.py
+	
+should suffice. Control-C will stop it and reset the meters to zero.
+
 ## Alternatives and further work
 You could use LEDs instead of meters to save money. No circuit change required, though discerning relative usage would be tricky.
 
